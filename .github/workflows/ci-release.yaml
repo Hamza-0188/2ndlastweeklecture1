@@ -1,0 +1,27 @@
+name: wf-ci-release
+on:
+   pull_request:
+     branches:
+     - release/**
+     types:
+      - opened
+      - synchronize
+jobs:
+  lintting-job-release:
+   runs-on: ubuntu-latest
+   steps:
+     - name: Checkout Repo From GH Server
+       uses: action/checkout@4
+       with:
+        ref: "${{github.ref}}" # yai os branch ko save kara GA JAHAA PULL REQUEST CREATE HUNA
+     - name: Currenlty Checkout branches 
+       run:   echo "${{github.ref}}"
+     - name: Checkout Repo From GH Server
+       uses: action/checkout@4
+               
+     - name: Lint Html Files With Lint
+       run:  npx htmlhint "**/*.html"
+     - name: Lint css Files With Lint
+       run:  npx stylelint "**/*.css"
+     - name: Build Website with Parcel
+       run: npx parcel build "./src/index.html" --dist-dir "./dist" --public-url "./"
