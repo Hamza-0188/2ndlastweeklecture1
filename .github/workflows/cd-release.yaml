@@ -1,0 +1,49 @@
+# Workflow name for continuous deployment on the develop branch
+name: wf-cd-develop
+
+# Trigger the workflow on push events to any branch matching "release/**"
+on:
+  push:
+    branches:
+      - release/**  # This triggers when pushing to branches like release/v1.0
+
+jobs:
+  build-job-develop:
+    runs-on: ubuntu-latest  # The job runs on the latest Ubuntu runner
+    steps:
+      # Step 1: Checkout the repository code on the runner
+      - name: Checkout Repository On the Runner
+        uses: actions/checkout@v4
+        with:
+          ref: "${{github.ref}}"  # Uses the git reference that triggered the workflow
+
+      # Step 2: Build the project using Parcel bundler
+      - name: Test Building With Parcel
+        run: npx parcel build "./src/index.html" --dist-dir "./dist" --public-url "./"
+        # This command builds the project by processing the index.html file.
+
+      # Step 3: Upload the build artifacts for later deployment
+      - name: Upload Build Artifacts
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "./fel-dist"  # The directory where the build artifacts are located
+          name: "release-build-artifact"  # The artifact is labeled with this name for linking later
+
+# Deployment job: Deploys the build artifact to the staging environment
+
+jobs:
+  deploy-release-jobs:
+  needs: "build-release-jobs"  # Note: Ensure that this dependency name matches the actual job name
+  runs-on: ubuntu-latest  # Uses an Ubuntu runner
+  environment:
+    name: "staging-env"  # Specifies the target environment name
+  permissions:
+    id-token: write  # Grants permission to write an ID token if needed for the deployment
+    pages: write     # Grants permission to write to GitHub Pages (or similar environments)
+  steps:
+    # Step 1: Deploy the build artifact using GitHub Actions deploy-pages
+    - name: Deploy Build Artifacts in "staging-env"
+      uses: actions/deploy-pages@v4
+      with:
+        artifact_name: "release-build-artifact"  # References the artifact uploaded earlier
+        token: "${{github.token}}"  # Uses the GitHub token for authentication during deployment
